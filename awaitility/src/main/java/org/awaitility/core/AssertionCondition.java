@@ -36,6 +36,7 @@ public class AssertionCondition implements Condition<Void> {
     private String lastExceptionMessage;
     private final ConditionEvaluationHandler<Object> conditionEvaluationHandler;
 
+
     /**
      * <p>Constructor for AssertionCondition.</p>
      *
@@ -64,13 +65,16 @@ public class AssertionCondition implements Condition<Void> {
                 }
             }
         };
-        conditionAwaiter = new ConditionAwaiter(callable, settings) {
+
+        conditionAwaiter = ConditionAwaiterFactory.getInstance().newConditionAwaiter(callable, settings, new TimeoutMessageSupplier() {
             @Override
-            protected String getTimeoutMessage() {
+            public String getTimeoutMessage() {
                 return getMismatchMessage(supplier, lastExceptionMessage, settings.getAlias(), false);
             }
-        };
+        });
     }
+
+
 
     private String getMatchMessage(ThrowingRunnable supplier, String conditionAlias) {
         return generateDescriptionPrefix(supplier, conditionAlias, true) + " reached its end value";
@@ -122,4 +126,5 @@ public class AssertionCondition implements Condition<Void> {
         conditionAwaiter.await(conditionEvaluationHandler);
         return null;
     }
+
 }
