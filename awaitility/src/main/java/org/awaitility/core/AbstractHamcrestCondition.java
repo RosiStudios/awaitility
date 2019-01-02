@@ -58,12 +58,7 @@ public abstract class AbstractHamcrestCondition<T> implements Condition<T> {
 
             }
         };
-        conditionAwaiter = new ConditionAwaiter(callable, settings) {
-            @Override
-            protected String getTimeoutMessage() {
-                return getMismatchMessage(supplier, matcher);
-            }
-        };
+        conditionAwaiter = new ConditionAwaiterImpl(callable, settings,()-> getMismatchMessage(supplier, matcher));
     }
 
 

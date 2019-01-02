@@ -39,36 +39,36 @@ class CallableCondition implements Condition<Void> {
     CallableCondition(final Callable<Boolean> matcher, ConditionSettings settings) {
         conditionEvaluationHandler = new ConditionEvaluationHandler<Object>(null, settings);
         ConditionEvaluationWrapper conditionEvaluationWrapper = new ConditionEvaluationWrapper(matcher, settings, conditionEvaluationHandler);
-        conditionAwaiter = new ConditionAwaiter(conditionEvaluationWrapper, settings) {
-            @SuppressWarnings("rawtypes")
-            @Override
-            protected String getTimeoutMessage() {
-                if (timeout_message != null) {
-                    return timeout_message;
-                }
-                final String timeoutMessage;
-                if (matcher == null) {
-                    timeoutMessage = "";
-                } else {
-                    final Class<? extends Callable> type = matcher.getClass();
-                    final Method enclosingMethod = type.getEnclosingMethod();
-                    if (type.isAnonymousClass() && enclosingMethod != null) {
-                        timeoutMessage = String.format("Condition returned by method \"%s\" in class %s was not fulfilled",
-                                enclosingMethod.getName(), enclosingMethod.getDeclaringClass().getName());
-                    } else {
-                        final String message;
-                        if (isLambdaClass(type)) {
-                            message = "with " + generateLambdaErrorMessagePrefix(type, false);
-                        } else {
-                            message = type.getName();
-                        }
-                        timeoutMessage = String.format("Condition %s was not fulfilled", message);
-                    }
-                }
-                return timeoutMessage;
+
+        conditionAwaiter = new ConditionAwaiterImpl(conditionEvaluationWrapper, settings,()->{
+            if (timeout_message != null) {
+                return timeout_message;
             }
-        };
+            final String timeoutMessage;
+            if (matcher == null) {
+                timeoutMessage = "";
+            } else {
+                final Class<? extends Callable> type = matcher.getClass();
+                final Method enclosingMethod = type.getEnclosingMethod();
+                if (type.isAnonymousClass() && enclosingMethod != null) {
+                    timeoutMessage = String.format("Condition returned by method \"%s\" in class %s was not fulfilled",
+                            enclosingMethod.getName(), enclosingMethod.getDeclaringClass().getName());
+                } else {
+                    final String message;
+                    if (isLambdaClass(type)) {
+                        message = "with " + generateLambdaErrorMessagePrefix(type, false);
+                    } else {
+                        message = type.getName();
+                    }
+                    timeoutMessage = String.format("Condition %s was not fulfilled", message);
+                }
+            }
+            return timeoutMessage;
+        });
+
+
     }
+
 
     /**
      * <p>await</p>

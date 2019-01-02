@@ -64,13 +64,12 @@ public class AssertionCondition implements Condition<Void> {
                 }
             }
         };
-        conditionAwaiter = new ConditionAwaiter(callable, settings) {
-            @Override
-            protected String getTimeoutMessage() {
-                return getMismatchMessage(supplier, lastExceptionMessage, settings.getAlias(), false);
-            }
-        };
+        conditionAwaiter = new ConditionAwaiterImpl(callable, settings, () -> {
+            return getMismatchMessage(supplier, lastExceptionMessage, settings.getAlias(), false);
+        });
     }
+
+
 
     private String getMatchMessage(ThrowingRunnable supplier, String conditionAlias) {
         return generateDescriptionPrefix(supplier, conditionAlias, true) + " reached its end value";
