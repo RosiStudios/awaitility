@@ -12,6 +12,11 @@ public class ConditionAwaiterFactory{
     public ConditionAwaiter newConditionAwaiter(ConditionEvaluator conditionEvaluator,
                                                 ConditionSettings conditionSettings,
                                                 TimeoutMessageSupplier timeoutMessageSupplier) {
-        return new ConditionAwaiterImpl(conditionEvaluator, conditionSettings, timeoutMessageSupplier);
+        return new ConditionAwaiterTest(conditionEvaluator, conditionSettings, timeoutMessageSupplier);
     }
+    /*public ConditionAwaiter newConditionAwaiter(ConditionEvaluator conditionEvaluator,
+                                                ConditionSettings conditionSettings,
+                                                TimeoutMessageSupplier timeoutMessageSupplier) {
+        return new ConditionAwaiterImpl(conditionEvaluator, conditionSettings, timeoutMessageSupplier);
+    }*/
 }

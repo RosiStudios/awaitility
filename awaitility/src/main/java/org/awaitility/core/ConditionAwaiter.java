@@ -28,8 +28,5 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.awaitility.classpath.ClassPathResolver.existInCP;
 
 public interface ConditionAwaiter {
-
-    @SuppressWarnings("deprecation")
-    public <T> void await(final ConditionEvaluationHandler<T> conditionEvaluationHandler) ;
-
+    <T> void await(final ConditionEvaluationHandler<T> conditionEvaluationHandler) ;
 }

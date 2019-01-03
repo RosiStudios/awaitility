@@ -66,12 +66,9 @@ public abstract class AbstractHamcrestCondition<T> implements Condition<T> {
         });
     }
 
-
     private String getMatchMessage(Callable<T> supplier, Matcher<? super T> matcher) {
         return String.format("%s reached its end value of %s", getCallableDescription(supplier), HamcrestToStringFilter.filter(matcher));
     }
-
-
 
     private String getMismatchMessage(Callable<T> supplier, Matcher<? super T> matcher) {
         Description mismatchDescription = new StringDescription();

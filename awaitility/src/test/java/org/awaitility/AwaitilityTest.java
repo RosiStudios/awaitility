@@ -380,6 +380,7 @@ public class AwaitilityTest {
         with().pollDelay(10, MINUTES).await().atMost(10, SECONDS).until(fakeRepositoryValueEqualsOne());
     }
 
+
     @Test
     public void awaitilityThrowsIllegalStateExceptionWhenTimeoutIsEqualToPollDelay() {
         exception.expect(IllegalStateException.class);
@@ -398,6 +399,31 @@ public class AwaitilityTest {
                        }
                 );
     }
+    //Frauscher Tests
+    @Test
+    public void succeedInGraceperiod(){
+        new Asynch(fakeRepository).perform();
+        exception.expect(ConditionTimeoutException.class);
+        exception.expectMessage("which is later than expected max timeout 350 MILLISECONDS");
+        await().atMost(350,MILLISECONDS).until(value(), equalTo(1));
+    }
+    @Test
+    public void succeedInGraceperiodLonger(){
+        new Asynch(fakeRepository).perform();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {}
+                fakeRepository.setValue(666);
+            }
+        }).start();
+        exception.expect(ConditionTimeoutException.class);
+        exception.expectMessage("which is later than expected max timeout 1000 MILLISECONDS");
+        await().atMost(1000,MILLISECONDS).until(value(), equalTo(666));
+    }
+
 
     private Callable<Boolean> fakeRepositoryValueEqualsOne() {
         return new FakeRepositoryEqualsOne(fakeRepository);
