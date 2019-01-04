@@ -25,11 +25,8 @@ import java.util.concurrent.Callable;
 public abstract class AbstractHamcrestCondition<T> implements Condition<T> {
 
     private ConditionAwaiter conditionAwaiter;
-
     private volatile T lastResult;
     private final ConditionEvaluationHandler<T> conditionEvaluationHandler;
-
-
     /**
      * <p>Constructor for AbstractHamcrestCondition.</p>
      *

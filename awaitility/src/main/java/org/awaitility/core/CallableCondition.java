@@ -39,7 +39,6 @@ class CallableCondition implements Condition<Void> {
     CallableCondition(final Callable<Boolean> matcher, ConditionSettings settings) {
         conditionEvaluationHandler = new ConditionEvaluationHandler<Object>(null, settings);
         ConditionEvaluationWrapper conditionEvaluationWrapper = new ConditionEvaluationWrapper(matcher, settings, conditionEvaluationHandler);
-
         conditionAwaiter = ConditionAwaiterFactory.getInstance().newConditionAwaiter(conditionEvaluationWrapper, settings, new TimeoutMessageSupplier() {
             @Override
             public String getTimeoutMessage() {
@@ -73,7 +72,6 @@ class CallableCondition implements Condition<Void> {
         });
 
     }
-
 
     /**
      * <p>await</p>

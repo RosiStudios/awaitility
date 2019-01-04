@@ -414,7 +414,7 @@ public class AwaitilityTest {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(1500);
+                    Thread.sleep(2500);
                 } catch (InterruptedException e) {}
                 fakeRepository.setValue(666);
             }

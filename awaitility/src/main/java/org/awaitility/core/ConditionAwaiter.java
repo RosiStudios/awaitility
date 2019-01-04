@@ -15,18 +15,6 @@
  */
 package org.awaitility.core;
 
-import com.sun.org.apache.xpath.internal.functions.Function;
-import org.awaitility.Duration;
-
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.lang.reflect.Method;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.awaitility.classpath.ClassPathResolver.existInCP;
-
 public interface ConditionAwaiter {
-    <T> void await(final ConditionEvaluationHandler<T> conditionEvaluationHandler) ;
+    <T> void await(final ConditionEvaluationHandler<T> conditionEvaluationHandler);
 }

@@ -32,10 +32,8 @@ import static org.awaitility.core.LambdaErrorMessageGenerator.isLambdaClass;
 public class AssertionCondition implements Condition<Void> {
 
     private final ConditionAwaiter conditionAwaiter;
-
     private String lastExceptionMessage;
     private final ConditionEvaluationHandler<Object> conditionEvaluationHandler;
-
 
     /**
      * <p>Constructor for AssertionCondition.</p>
@@ -73,8 +71,6 @@ public class AssertionCondition implements Condition<Void> {
             }
         });
     }
-
-
 
     private String getMatchMessage(ThrowingRunnable supplier, String conditionAlias) {
         return generateDescriptionPrefix(supplier, conditionAlias, true) + " reached its end value";
@@ -126,5 +122,4 @@ public class AssertionCondition implements Condition<Void> {
         conditionAwaiter.await(conditionEvaluationHandler);
         return null;
     }
-
 }

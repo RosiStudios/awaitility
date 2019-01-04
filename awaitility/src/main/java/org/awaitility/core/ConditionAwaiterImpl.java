@@ -26,11 +26,12 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.awaitility.classpath.ClassPathResolver.existInCP;
 
 class ConditionAwaiterImpl implements UncaughtExceptionHandler, ConditionAwaiter {
-    private final ExecutorService executor;
-    private final ConditionEvaluator conditionEvaluator;
-    private final AtomicReference<Throwable> uncaughtThrowable;
-    private final ConditionSettings conditionSettings;
-    private final TimeoutMessageSupplier timeoutMessageSupplierProvider;
+    protected final ExecutorService executor;
+    protected final ConditionEvaluator conditionEvaluator;
+    protected final AtomicReference<Throwable> uncaughtThrowable;
+    protected final ConditionSettings conditionSettings;
+    protected final TimeoutMessageSupplier timeoutMessageSupplierProvider;
+    protected Duration evaluationDuration;
 
 
     /**
@@ -63,57 +64,16 @@ class ConditionAwaiterImpl implements UncaughtExceptionHandler, ConditionAwaiter
      */
     @Override
     public <T> void await(final ConditionEvaluationHandler<T> conditionEvaluationHandler) {
-        final Duration pollDelay = conditionSettings.getPollDelay();
         final Duration maxWaitTime = conditionSettings.getMaxWaitTime();
         final Duration minWaitTime = conditionSettings.getMinWaitTime();
-
-        final long maxTimeout = maxWaitTime.getValue();
-        long pollingStartedNanos = System.nanoTime() - pollDelay.getValueInNS();
-
-        int pollCount = 0;
+        evaluationDuration = new Duration(0, MILLISECONDS);
         boolean succeededBeforeTimeout = false;
-        ConditionEvaluationResult lastResult = null;
-        Duration evaluationDuration = new Duration(0, MILLISECONDS);
-        Future<ConditionEvaluationResult> currentConditionEvaluation = null;
-        try {
-            if (executor.isShutdown() || executor.isTerminated()) {
-                throw new IllegalStateException("The executor service that Awaitility is instructed to use has been shutdown so condition evaluation cannot be performed. Is there something wrong the thread or executor configuration?");
-            }
+        final Duration pollDelay = conditionSettings.getPollDelay();
+        long pollingStartedNanos = System.nanoTime() - pollDelay.getValueInNS();
+        ConditionEvaluationResult lastResult = evaluateCondition(conditionEvaluationHandler, maxWaitTime);
 
-            conditionEvaluationHandler.start();
-            if (!pollDelay.isZero()) {
-                Thread.sleep(pollDelay.getValueInMS());
-            }
-            Duration pollInterval = pollDelay;
-            while (maxWaitTime.compareTo(evaluationDuration) > 0) {
-                pollCount = pollCount + 1;
-                // Only wait for the next condition evaluation for at most what's remaining of
-                Duration maxWaitTimeForThisCondition = maxWaitTime.minus(evaluationDuration);
-                currentConditionEvaluation = executor.submit(new ConditionPoller(pollInterval));
-                // Wait for condition evaluation to complete with "maxWaitTimeForThisCondition" or else throw TimeoutException
-                lastResult = currentConditionEvaluation.get(maxWaitTimeForThisCondition.getValue(), maxWaitTimeForThisCondition.getTimeUnit());
-                if (lastResult.isSuccessful() || lastResult.hasThrowable()) {
-                    break;
-                }
-                pollInterval = conditionSettings.getPollInterval().next(pollCount, pollInterval);
-                Thread.sleep(pollInterval.getValueInMS());
-                evaluationDuration = calculateConditionEvaluationDuration(pollDelay, pollingStartedNanos);
-            }
-            evaluationDuration = calculateConditionEvaluationDuration(pollDelay, pollingStartedNanos);
-            succeededBeforeTimeout = maxWaitTime.compareTo(evaluationDuration) > 0;
-        } catch (TimeoutException e) {
-            lastResult = new ConditionEvaluationResult(false, null, e);
-        } catch (ExecutionException e) {
-            lastResult = new ConditionEvaluationResult(false, e.getCause(), null);
-        } catch (Throwable e) {
-            lastResult = new ConditionEvaluationResult(false, e, null);
-        } finally {
-            if (currentConditionEvaluation != null) {
-                // Cancelling future in order to avoid race-condition with last result for Hamcrest matchers
-                // See https://github.com/awaitility/awaitility/issues/109
-                currentConditionEvaluation.cancel(true);
-            }
-        }
+        evaluationDuration = calculateConditionEvaluationDuration(pollDelay, pollingStartedNanos);
+        succeededBeforeTimeout = maxWaitTime.compareTo(evaluationDuration) > 0;
 
         try {
             if (uncaughtThrowable.get() != null) {
@@ -151,6 +111,53 @@ class ConditionAwaiterImpl implements UncaughtExceptionHandler, ConditionAwaiter
             uncaughtThrowable.set(null);
             conditionSettings.getExecutorLifecycle().executeNormalCleanupBehavior(executor);
         }
+    }
+
+    protected ConditionEvaluationResult evaluateCondition(final ConditionEvaluationHandler conditionEvaluationHandler, final Duration maxWaitTime) {
+        ConditionEvaluationResult lastResult = null;
+        Future<ConditionEvaluationResult> currentConditionEvaluation = null;
+        final Duration pollDelay = conditionSettings.getPollDelay();
+        long pollingStartedNanos = System.nanoTime() - pollDelay.getValueInNS();
+        int pollCount = 0;
+        try {
+            if (executor.isShutdown() || executor.isTerminated()) {
+                throw new IllegalStateException("The executor service that Awaitility is instructed to use has been shutdown so condition evaluation cannot be performed. Is there something wrong the thread or executor configuration?");
+            }
+
+            conditionEvaluationHandler.start();
+            if (!pollDelay.isZero()) {
+                Thread.sleep(pollDelay.getValueInMS());
+            }
+            Duration pollInterval = pollDelay;
+            while (maxWaitTime.compareTo(evaluationDuration) > 0) {
+                pollCount = pollCount + 1;
+                // Only wait for the next condition evaluation for at most what's remaining of
+                Duration maxWaitTimeForThisCondition = maxWaitTime.minus(evaluationDuration);
+                currentConditionEvaluation = executor.submit(new ConditionPoller(pollInterval));
+                // Wait for condition evaluation to complete with "maxWaitTimeForThisCondition" or else throw TimeoutException
+                lastResult = currentConditionEvaluation.get(maxWaitTimeForThisCondition.getValue(), maxWaitTimeForThisCondition.getTimeUnit());
+                if (lastResult.isSuccessful() || lastResult.hasThrowable()) {
+                    break;
+                }
+                pollInterval = conditionSettings.getPollInterval().next(pollCount, pollInterval);
+                Thread.sleep(pollInterval.getValueInMS());
+                evaluationDuration = calculateConditionEvaluationDuration(pollDelay, pollingStartedNanos);
+            }
+        } catch (TimeoutException e) {
+            lastResult = new ConditionEvaluationResult(false, null, e);
+        } catch (ExecutionException e) {
+            lastResult = new ConditionEvaluationResult(false, e.getCause(), null);
+        } catch (Throwable e) {
+            lastResult = new ConditionEvaluationResult(false, e, null);
+        } finally {
+            if (currentConditionEvaluation != null) {
+                // Cancelling future in order to avoid race-condition with last result for Hamcrest matchers
+                // See https://github.com/awaitility/awaitility/issues/109
+                currentConditionEvaluation.cancel(true);
+            }
+        }
+
+        return lastResult;
     }
 
     protected String getTimeoutString(Duration maxWaitTime) {
