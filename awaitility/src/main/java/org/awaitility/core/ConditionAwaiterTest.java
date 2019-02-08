@@ -6,7 +6,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.awaitility.classpath.ClassPathResolver.existInCP;
 
 public class ConditionAwaiterTest extends ConditionAwaiterImpl {
-    protected final long multiplier = 3;
+    protected long multiplier;
 
     /**
      * <p>Constructor for ConditionAwaiterImpl.</p>
@@ -15,8 +15,9 @@ public class ConditionAwaiterTest extends ConditionAwaiterImpl {
      * @param conditionSettings      a {@link ConditionSettings} object.
      * @param timeoutMessageSupplier
      */
-    ConditionAwaiterTest(ConditionEvaluator conditionEvaluator, ConditionSettings conditionSettings, TimeoutMessageSupplier timeoutMessageSupplier) {
+    ConditionAwaiterTest(ConditionEvaluator conditionEvaluator, ConditionSettings conditionSettings, TimeoutMessageSupplier timeoutMessageSupplier,long multiplier) {
         super(conditionEvaluator, conditionSettings, timeoutMessageSupplier);
+        this.multiplier=multiplier;
     }
 
     @Override
@@ -64,7 +65,7 @@ public class ConditionAwaiterTest extends ConditionAwaiterImpl {
                                 "max timeout %s %s", evaluationDuration.getValueInMS(), MILLISECONDS,
                         maxWaitTime.getValue(), maxWaitTime.getTimeUnit());
                 System.out.println(message);
-                throw new ConditionTimeoutException(message);
+                //throw new ConditionTimeoutException(message);
             }
         } catch (Throwable e) {
             CheckedExceptionRethrower.safeRethrow(e);

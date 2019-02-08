@@ -268,7 +268,7 @@ public class AwaitilityTest {
         catchUncaughtExceptions().and().await().forever().until(value(), equalTo(1));
     }
 
-    @Test(timeout = 2000, expected = ConditionTimeoutException.class)
+    @Test(timeout = 4000, expected = ConditionTimeoutException.class)
     public void whenDontCatchUncaughtExceptionsIsSpecifiedThenExceptionsFromOtherThreadsAreNotCaught() throws Exception {
         new AssertExceptionThrownInAnotherThreadButNeverCaughtByAnyThreadTest() {
             @Override
@@ -400,30 +400,48 @@ public class AwaitilityTest {
                 );
     }
     //Frauscher Tests
-    @Test
+    @Test(timeout=1100)
     public void succeedInGraceperiod(){
+        System.setProperty("multiplier","3");
+        System.setProperty("awaitility-condition-awaiter-factory","org.awaitility.core.ConditionAwaiterFactoryDefault");
+        final int timeout=350;
         new Asynch(fakeRepository).perform();
-        exception.expect(ConditionTimeoutException.class);
-        exception.expectMessage("which is later than expected max timeout 350 MILLISECONDS");
         await().atMost(350,MILLISECONDS).until(value(), equalTo(1));
     }
-    @Test
+    @Test(timeout = 3000)
     public void succeedInGraceperiodLonger(){
+        System.setProperty("multiplier","3");
+        System.setProperty("awaitility-condition-awaiter-factory","org.awaitility.core.ConditionAwaiterFactoryDefault");
+        final int timeout=1000;
         new Asynch(fakeRepository).perform();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(2500);
+                    Thread.sleep((int)(timeout*2.5));
                 } catch (InterruptedException e) {}
                 fakeRepository.setValue(666);
             }
         }).start();
-        exception.expect(ConditionTimeoutException.class);
-        exception.expectMessage("which is later than expected max timeout 1000 MILLISECONDS");
-        await().atMost(1000,MILLISECONDS).until(value(), equalTo(666));
+        await().atMost(timeout,MILLISECONDS).until(value(), equalTo(666));
     }
-
+    @Test(timeout = 2000, expected = ConditionTimeoutException.class)
+    public void GracePeriodTimeout(){
+        System.setProperty("multiplier","3");
+        System.setProperty("awaitility-condition-awaiter-factory","org.awaitility.core.ConditionAwaiterFactoryDefault");
+        final int timeout=500;
+        new Asynch(fakeRepository).perform();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep((int)(timeout*3.5));
+                } catch (InterruptedException e) {}
+                fakeRepository.setValue(666);
+            }
+        }).start();
+        await().atMost(timeout,MILLISECONDS).until(value(), equalTo(666));
+    }
 
     private Callable<Boolean> fakeRepositoryValueEqualsOne() {
         return new FakeRepositoryEqualsOne(fakeRepository);
@@ -457,4 +475,5 @@ public class AwaitilityTest {
             }
         };
     }
+
 }

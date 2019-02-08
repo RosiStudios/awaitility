@@ -1,22 +1,24 @@
 package org.awaitility.core;
 
-public class ConditionAwaiterFactory{
-    private static final ConditionAwaiterFactory CONDITION_AWAITER_FACTORY = new ConditionAwaiterFactory();
+public abstract class ConditionAwaiterFactory {
 
-    public static ConditionAwaiterFactory getInstance() {
-        return CONDITION_AWAITER_FACTORY;
+    public static ConditionAwaiterFactory getInstance()
+    {
+        System.getProperties().toString();
+        String factoryName = System.getProperty("awaitility-condition-awaiter-factory");
+        if (factoryName != null) {
+            try {
+                Class targetFactory = Class.forName(factoryName);
+                return (ConditionAwaiterFactory) targetFactory.getConstructor().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Could not create Factory with name: "+factoryName);
+            }
+        }
+        return new ConditionAwaiterFactoryDefault();
     }
 
-    private ConditionAwaiterFactory() { }
+    public abstract ConditionAwaiter newConditionAwaiter(ConditionEvaluator conditionEvaluator,
+                                                         ConditionSettings conditionSettings,
+                                                         TimeoutMessageSupplier timeoutMessageSupplier);
 
-    public ConditionAwaiter newConditionAwaiter(ConditionEvaluator conditionEvaluator,
-                                                ConditionSettings conditionSettings,
-                                                TimeoutMessageSupplier timeoutMessageSupplier) {
-        return new ConditionAwaiterTest(conditionEvaluator, conditionSettings, timeoutMessageSupplier);
-    }
-    /*public ConditionAwaiter newConditionAwaiter(ConditionEvaluator conditionEvaluator,
-                                                ConditionSettings conditionSettings,
-                                                TimeoutMessageSupplier timeoutMessageSupplier) {
-        return new ConditionAwaiterImpl(conditionEvaluator, conditionSettings, timeoutMessageSupplier);
-    }*/
 }
